@@ -1,0 +1,77 @@
+name: .NET
+
+on:
+  push:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+     # Add NuGet Sources
+
+    - name: Create Local NuGet Directory
+      run: mkdir ~/nuget
+
+    - name: Add Local Nuget Source
+      run: dotnet nuget add source ~/nuget
+
+    - name: Add Garage Group NuGet Source
+      run: >
+        dotnet nuget add source ${{ vars.GG_NUGET_SOURCE_URL }}
+        -n garage
+        -u ${{ secrets.GG_NUGET_SOURCE_USER_NAME }}
+        -p ${{ secrets.GG_NUGET_SOURCE_USER_PASSWORD }}
+        --store-password-in-clear-text
+
+    # Producer.Contract
+
+    - name: Restore Producer.Contract
+      run: dotnet restore ./src/Producer/*/Contract.csproj
+
+    - name: Build Producer.Contract
+      run: dotnet build ./src/Producer/*/Contract.csproj --no-restore  -c Release
+
+    - name: Pack Producer.Contract
+      run: dotnet pack ./src/Producer/*/Contract.csproj --no-restore -o ~/nuget  -c Release
+
+    # Producer.Api
+
+    - name: Restore Producer.Api
+      run: dotnet restore ./src/Producer/*/Api.csproj
+
+    - name: Build Producer.Api
+      run: dotnet build ./src/Producer/*/Api.csproj --no-restore  -c Release
+
+    - name: Pack Producer.Api
+      run: dotnet pack ./src/Producer/*/Api.csproj --no-restore -o ~/nuget  -c Release
+
+    # Consumer.Handler
+
+    - name: Restore Consumer.Handler
+      run: dotnet restore ./src/Consumer/*/Handler.csproj
+
+    - name: Build Consumer.Handler
+      run: dotnet build ./src/Consumer/*/Handler.csproj --no-restore  -c Release
+
+    - name: Pack Consumer.Handler
+      run: dotnet pack ./src/Consumer/*/Handler.csproj --no-restore -o ~/nuget  -c Release
+
+    # Push
+
+    - name: Push Packages
+      if: ${{ github.ref == 'refs/heads/main' }}
+      run: >
+        dotnet nuget push "../../../nuget/*.nupkg"
+        -s ${{ vars.GG_NUGET_SOURCE_URL }}
+        -k ${{ secrets.GG_NUGET_SOURCE_USER_PASSWORD }}
+        --skip-duplicate
