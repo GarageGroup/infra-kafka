@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Consumer/">
+    <Project Path="Consumer/Handler/Handler.csproj" />
+  </Folder>
+  <Folder Name="/Producer/">
+    <Project Path="Producer/Api/Api.csproj" />
+    <Project Path="Producer/Contract/Contract.csproj" />
+  </Folder>
+</Solution>
